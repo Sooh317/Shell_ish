@@ -11,12 +11,11 @@ void wait_on_background(void){
     node* cur = BG_H;
     node* nxt;
 
-    /* wait some number of times */
     while(cur != NULL){
         nxt = cur->next;
         tmp = waitpid(cur->pid, &status, WNOHANG);
         if(tmp < 0) perror("waitpid error"), exit(1);
-        else if(WIFEXITED(status)){
+        else if(tmp > 0 && (WIFEXITED(status) || WIFSIGNALED(status))){
             if(cur->prev == NULL){
                 if(cur->next == NULL) BG_B = BG_H = NULL;
                 else{
