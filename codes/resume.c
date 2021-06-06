@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <signal.h>
 
-void give_node_to_bg(node*, pid_t);
+void give_node(node*, pid_t, int flag);
 
 extern node* BG_H, *BG_B;
 extern node* SUS_H, *SUS_B;
@@ -23,7 +23,7 @@ void resume(job* jb){
                 node* nxt;
                 while(cur != NULL){
                     nxt = cur->next;
-                    give_node_to_bg(cur, id);
+                    give_node(cur, id, 0); // give node to background
                     cur = nxt;
                 }
             }

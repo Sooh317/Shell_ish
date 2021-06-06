@@ -20,6 +20,7 @@ void make_sus(process, pid_t, pid_t);
 void make_bg(process, pid_t, pid_t);
 void resume(job*);
 void fix(process*);
+void to_fg(void);
 
 
 void myexec(job* jb, char *envp[]){	
@@ -33,7 +34,8 @@ void myexec(job* jb, char *envp[]){
 		return;
 	}
 	else if(!strcmp(jb->process_list->program_name, "fg")){
-		perror("this feature not supported\n");
+		//perror("this feature not supported\n");
+		to_fg();
 		return;
 	}
 
@@ -41,7 +43,7 @@ void myexec(job* jb, char *envp[]){
 	pid_t pid[MAX_PROCESS]; // child process id
 	int status[MAX_PROCESS];
 	int pfd[MAX_PROCESS * 2]; // 偶数番目が read, 奇数番目が write を担当する pipe_fd
-	int i, j;
+	int i;
 	int fd_in = -1, fd_out = -1; // for redirect
 	int pipe_num, process_num;   // for pipe 
 
@@ -51,7 +53,7 @@ void myexec(job* jb, char *envp[]){
 		
 	for(i = 0; i < process_num; i++){
 		if(cur_process->program_name[0] != '/') fix(cur_process);
-		//sigprocmask ? -> cond = RUNNING
+
 		if(i < pipe_num && pipe(pfd + 2*i) == -1) perror("pipe error"), exit(1);
 
 		pid[i] = fork();
@@ -71,11 +73,12 @@ void myexec(job* jb, char *envp[]){
 			
 			if(fd_in != -1) close(fd_in);
 			if(fd_out != -1) close(fd_out);
-			//for(j = 0; j < pipe_num * 2; j++) close(pfd[j]);
+
 			execve(cur_process->program_name, cur_process->argument_list, envp);
 			perror("execve error");
 			exit(1);
 		}
+
 		if(i < pipe_num) close(pfd[2*i + 1]);
 		if(i > 0) close(pfd[2*(i - 1)]);
 
@@ -101,7 +104,7 @@ void myexec(job* jb, char *envp[]){
 			if(waitpid(pid[i], &status[i], WUNTRACED) < 0) perror("wait error"), exit(1);
 			if(WIFSTOPPED(status[i])){
 				make_sus(*cur_process, pid[i], pid[0]);
-				if(tcsetpgrp(0, getpgrp()) < 0) perror("tcsetpgid error"), exit(1);
+				if(tcsetpgrp(0, getpgrp()) < 0) perror("tcsetpgrp error"), exit(1);
 			}
 		}
 		else make_bg(*cur_process, pid[i], pid[0]);  // background

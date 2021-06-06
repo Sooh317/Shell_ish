@@ -45,49 +45,92 @@ void make_bg(process proc, pid_t pid, pid_t pgid){
     }
 }
 
-void give_node_to_bg(node* cur, pid_t id){
-    if(cur->pgid == id){ // free cur
+void give_node(node* cur, pid_t id, int flag){ // if flag = 0 then give node to background, otherwize to suspended
+    if(cur->pgid == id){
         if(cur->prev == NULL){
-            if(cur->next == NULL){ // only one suspended process
-                if(BG_B == NULL) BG_H = BG_B = cur; 
+            if(cur->next == NULL){ // only one process in the list
+                if(flag == 0){
+                    if(BG_B == NULL) BG_H = BG_B = cur; 
+                    else{
+                        BG_B->next = cur;
+                        cur->prev = BG_B;
+                        BG_B = cur;
+                        SUS_H = SUS_B = NULL;
+                    }
+                }
                 else{
-                    BG_B->next = cur;
-                    cur->prev = BG_B;
-                    BG_B = cur;
-                    SUS_H = SUS_B = NULL;
+                    if(SUS_B == NULL) SUS_H = SUS_B = cur; 
+                    else{
+                        SUS_B->next = cur;
+                        cur->prev = SUS_B;
+                        SUS_B = cur;
+                        BG_H = BG_B = NULL;
+                    }
                 }
             }
             else{                  // first element in many suspenede processes
-                cur->next->prev = NULL;
-                SUS_H = cur->next;
-                cur->next = NULL;
-                if(BG_B == NULL) BG_H = BG_B = cur;
+                cur->next->prev = NULL; // next node becomes the first node in the list
+                cur->next = NULL;     // put this node to the tail of the other list
+                if(flag == 0){
+                    SUS_H = cur->next;
+                    if(BG_B == NULL) BG_H = BG_B = cur;
+                    else{
+                        cur->prev = BG_B;
+                        BG_B->next = cur;
+                        BG_B = cur;
+                    }
+                }
                 else{
-                    cur->prev = BG_B;
-                    BG_B->next = cur;
-                    BG_B = cur;
+                    BG_H = cur->next;
+                    if(SUS_B == NULL) SUS_H = SUS_B = cur;
+                    else{
+                        cur->prev = SUS_B;
+                        SUS_B->next = cur;
+                        SUS_B = cur;
+                    }
                 }
             }
         }   
         else{
             if(cur->next == NULL){  // last element in many suspended processes
-                SUS_B = cur->prev;
-                cur->prev = BG_B;    
-                if(BG_B == NULL) BG_H = BG_B = cur;
+                if(flag == 0){ 
+                    SUS_B = cur->prev;
+                    cur->prev = BG_B;    
+                    if(BG_B == NULL) BG_H = BG_B = cur;
+                    else{
+                        BG_B->next = cur;
+                        BG_B = cur;
+                    }
+                }
                 else{
-                    BG_B->next = cur;
-                    BG_B = cur;
-                }    
-            }
+                    BG_B = cur->prev;
+                    cur->prev = SUS_B;    
+                    if(SUS_B == NULL) SUS_H = SUS_B = cur;
+                    else{
+                        SUS_B->next = cur;
+                        SUS_B = cur;
+                    }
+                }
+            } 
             else{                   // have left and right suspended process node
                 cur->next->prev = cur->prev;
                 cur->prev->next = cur->next;
-                cur->prev = BG_B;
                 cur->next = NULL;
-                if(BG_B == NULL) BG_H = BG_B = cur;
+                if(flag == 0){
+                    cur->prev = BG_B;
+                    if(BG_B == NULL) BG_H = BG_B = cur;
+                    else{
+                        BG_B->next = cur;
+                        BG_B = cur;
+                    }
+                }
                 else{
-                    BG_B->next = cur;
-                    BG_B = cur;
+                    cur->prev = SUS_B;
+                    if(SUS_B == NULL) SUS_H = SUS_B = cur;
+                    else{
+                        SUS_B->next = cur;
+                        SUS_B = cur;
+                    }
                 }
             }
         }                     
