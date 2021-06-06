@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
-#include <errno.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -21,7 +20,6 @@ void make_sus(process, pid_t, pid_t);
 void make_bg(process, pid_t, pid_t);
 void resume(job*);
 void fix(process*);
-void change_dir(process*);
 
 
 void myexec(job* jb, char *envp[]){	
